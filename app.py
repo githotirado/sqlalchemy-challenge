@@ -110,7 +110,22 @@ def tobs():
 ##  a given start or start-end date range.
 @app.route("/api/v1.0/<start>/<end>")
 def startdate(start, end):
-    return "Start and start/end"
+    session = Session(engine)
+    end_date = end
+    start_date = start
+    tobstuple = (session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs))
+                        .filter(Measurement.date >= start_date)
+                        .filter(Measurement.date < end_date)
+                        .first()
+                )
+    session.close()
+    return (
+        f"Start date: {start_date}.  End date: {end_date}.</br>"
+        f"=================================</br>"
+        f"Min temp {tobstuple[0]:.1f}</br>"
+        f"Avg temp {tobstuple[1]:.1f}</br>"
+        f"Max temp {tobstuple[2]:.1f}"
+        )
 
 # Run if invoked by python command line
 if __name__ == "__main__":
