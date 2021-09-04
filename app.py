@@ -32,12 +32,12 @@ app = Flask(__name__)
 def home():
     '''List all available api routes'''
     return (
-    f"Available routes:</br>"
+    f"<b>Available routes:</b></br>"
     f"/api/v1.0/precipitation</br>"
     f"/api/v1.0/stations</br>"
     f"/api/v1.0/tobs</br>"
-    f"/api/v1.0/< start ></br>"
-    f"/api/v1.0/< start >/< end >"
+    f"/api/v1.0/<b>< start ></b>  <i>(where <b>< start ></b> is of form YYYY-mm-dd)</i></br>"
+    f"/api/v1.0/<b>< start ></b>/<b>< end ></b> <i>(where <b>< start ></b> and <b>< end ></b> are of form YYYY-mm-dd)</i>"
     )
 
 ## Precipitation: return JSON of query results dictionary
@@ -67,7 +67,7 @@ def precipitation():
 ## Return a JSON list of stations from the dataset
 @app.route("/api/v1.0/stations")
 def stations():
-    '''Return JSON list of statiions from the dataset'''
+    '''Return a JSON list of stations from the dataset'''
     # Create our session (link) from Python to the DB, queries, close
     session = Session(engine)
     stationstuple = session.query(Station.name).all()
@@ -78,11 +78,36 @@ def stations():
 ## Return a JSON list of temperature obsevations
 @app.route("/api/v1.0/tobs")
 def tobs():
-    return "The tobs URL"
+    '''Return JSON list of temperature observations for previous year of most active station'''
+    # Create our session (link) from Python to the DB, queries, close
+    session = Session(engine)
+    recent_date = (session.query(Measurement.date)
+                          .order_by(Measurement.date.desc())
+                          .first()
+                  )
+    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
+    one_year_earlier = most_recent_date - dt.timedelta(weeks=52)
+    active_stations = (session.query(Station.name, Station.station, func.count(Station.name))
+                              .filter(Station.station == Measurement.station)
+                              .group_by(Station.name)
+                              .order_by(func.count(Station.name).desc())
+                              .all()
+                      )
+    active_station = active_stations[0][1]
+    tobstuple = (session.query(Measurement.date, Measurement.tobs)
+                        .filter(Measurement.station == active_station)
+                        .filter(Measurement.date >= one_year_earlier)
+                        .all()
+                )
+    session.close()
+    # tobs_dict = {}
+    # for date1, tobs in tobstuple:
+    #     tobs_dict[date1] = tobs
+    tobs_list = [tobs[1] for tobs in tobstuple]
+    return jsonify(tobs_list)
 
 ## Return a JSON list of the min, avg, and max temperature for
 ##  a given start or start-end date range.
-# @app.route("/api/v1.0/<start>" "/app/v1.0/<start>/<end>")
 @app.route("/api/v1.0/<start>/<end>")
 def startdate(start, end):
     return "Start and start/end"
