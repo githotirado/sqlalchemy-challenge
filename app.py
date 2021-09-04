@@ -107,11 +107,37 @@ def tobs():
     return jsonify(tobs_list)
 
 ## Return a JSON list of the min, avg, and max temperature for
-##  a given start or start-end date range.
+##  a given start-end date range.
 @app.route("/api/v1.0/<start>/<end>")
-def startdate(start, end):
+def startend(start, end):
     session = Session(engine)
     end_date = end
+    start_date = start
+    tobstuple = (session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs))
+                        .filter(Measurement.date >= start_date)
+                        .filter(Measurement.date < end_date)
+                        .first()
+                )
+    session.close()
+    return (
+        f"Start date: {start_date}.  End date: {end_date}.</br>"
+        f"=================================</br>"
+        f"Min temp {tobstuple[0]:.1f}</br>"
+        f"Avg temp {tobstuple[1]:.1f}</br>"
+        f"Max temp {tobstuple[2]:.1f}"
+        )
+
+## Return a JSON list of the min, avg, and max temperature for
+##  a given start date range.
+@app.route("/api/v1.0/<start>")
+def startonly(start):
+    session = Session(engine)
+    recent_date = (session.query(Measurement.date)
+                          .order_by(Measurement.date.desc())
+                          .first()
+                  )
+    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
+    end_date = most_recent_date
     start_date = start
     tobstuple = (session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs))
                         .filter(Measurement.date >= start_date)
