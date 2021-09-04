@@ -26,6 +26,19 @@ Measurement = Base.classes.measurement
 # Set up FLASK
 app = Flask(__name__)
 
+# Frequently needed item. Put into its own function
+def date_vars():
+    session = Session(engine)
+    recent_date = (session.query(Measurement.date)
+                            .order_by(Measurement.date.desc())
+                            .first()
+                    )
+    global most_recent_date
+    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
+    global one_year_earlier
+    one_year_earlier = most_recent_date - dt.timedelta(weeks=52)
+    session.close()
+
 # Define the routes
 ## Home Page: list all routes that are available
 @app.route("/")
@@ -155,4 +168,5 @@ def startonly(start):
 
 # Run if invoked by python command line
 if __name__ == "__main__":
+    date_vars()
     app.run(debug=True)
