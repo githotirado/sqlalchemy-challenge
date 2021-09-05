@@ -26,7 +26,7 @@ Measurement = Base.classes.measurement
 # Set up FLASK
 app = Flask(__name__)
 
-# Frequently needed item. Put into its own function
+# Shared function to get default end_date and one_year_earlier
 def date_vars():
     session = Session(engine)
     recent_date = (session.query(Measurement.date)
@@ -59,12 +59,7 @@ def precipitation():
     '''Return JSON of precipitation results dictionary'''
     # Create our session (link) from Python to the DB, queries, close
     session = Session(engine)
-    recent_date = (session.query(Measurement.date)
-                          .order_by(Measurement.date.desc())
-                          .first()
-                  )
-    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
-    one_year_earlier = most_recent_date - dt.timedelta(weeks=52)
+
     date_precip = (session.query(Measurement.date, Measurement.prcp)
                           .filter(Measurement.date >= one_year_earlier)
                           .all()
@@ -94,12 +89,7 @@ def tobs():
     '''Return JSON list of temperature observations for previous year of most active station'''
     # Create our session (link) from Python to the DB, queries, close
     session = Session(engine)
-    recent_date = (session.query(Measurement.date)
-                          .order_by(Measurement.date.desc())
-                          .first()
-                  )
-    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
-    one_year_earlier = most_recent_date - dt.timedelta(weeks=52)
+    
     active_stations = (session.query(Station.name, Station.station, func.count(Station.name))
                               .filter(Station.station == Measurement.station)
                               .group_by(Station.name)
@@ -145,11 +135,7 @@ def startend(start, end):
 @app.route("/api/v1.0/<start>")
 def startonly(start):
     session = Session(engine)
-    recent_date = (session.query(Measurement.date)
-                          .order_by(Measurement.date.desc())
-                          .first()
-                  )
-    most_recent_date = dt.datetime.strptime(recent_date[0], "%Y-%m-%d")
+    
     end_date = most_recent_date
     start_date = start
     tobstuple = (session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs))
@@ -159,14 +145,14 @@ def startonly(start):
                 )
     session.close()
     return (
-        f"Start date: {start_date}.  End date: {end_date}.</br>"
+        f'Start date: {start_date}.  End date: {end_date.strftime("%Y-%m-%d")}.</br>'
         f"=================================</br>"
         f"Min temp {tobstuple[0]:.1f}</br>"
         f"Avg temp {tobstuple[1]:.1f}</br>"
         f"Max temp {tobstuple[2]:.1f}"
         )
 
-# Run if invoked by python command line
+# Run if invoked by python command line. Include common function
 if __name__ == "__main__":
     date_vars()
     app.run(debug=True)
