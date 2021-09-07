@@ -1,9 +1,10 @@
 # SQLAlchemy Homework - Surfs Up!
 
-## Notes: Completed required assignment, completed Bonus 1, performed only half of Bonus 2.
+## Notes: Completed required assignment, completed Bonus 1, completed Bonus 2.
 
-Bonus1: the p-value of the resulting paired t-test for same stations at different months was very small, much smaller than the 0.05 required to identify a significant difference.  The quantity of values for both sets of data (all June temperature data points regardless of year, all December temperature data oints regardless of year) were different; according to the paired t-test requirements, the two sets must be of same shape.  So I pared down the June set to be the same as the December set using indexed range (ie, [:1577]).
+Bonus1: the p-value of the resulting paired t-test for same stations at different months was very small, much smaller than the 0.05 required to identify a significant difference.  The quantity of values for both sets of data (all June temperature data points regardless of year, all December temperature data points regardless of year) were different; according to the paired t-test requirements, the two sets must be of same shape.  So I pared down the June set to be the same as the December set using indexed range (ie, [:1577]).
 
+Bonus2: Identified rainfall and temperature normals for the vacation time period suggested.
 - - -
 
 ## Bonus: Other Recommended Analyses
